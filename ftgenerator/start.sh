@@ -11,11 +11,12 @@ set -e #ERROR    - Exit whole scripts if single non-zero command return
 
 ##################################################################################
 ## 1.1. (optional) run setup.sh for setup environment and install dependencies  ##
-## 1.2. setup logic will check setup.lock file   ##
+## 1.2. setup logic will check setup.lock file                                  ##
 ## 2.1. (optional) fetch ftgenerator <version> from github private repository   ##
 ## 2.2. (optional) install ftgenerator scripts and data to correctly location   ##
 ## 3.   (optional) fetch latest freqtrade code from Github                      ##
 ## 4.   (optional) start ftgenerator script                                     ##
+## 5.   (optional) move current directory to freqtrade repository               ##
 ##################################################################################
 
 # @helper
@@ -55,9 +56,11 @@ set_key_value_long_option() {
 }
 
 banner() {
+  echo
   echo "----------------------------------------"
   echo "$@"
   echo "----------------------------------------"
+  echo
 }
 
 APP_NAME="ftgenerator"
@@ -71,6 +74,7 @@ RESET_ROOT=false     # reset root password (should run on GCP only)
 FTG_FETCH_MODE=false # download ftgenerator
 FT_FETCH_MODE=false  # fetch latest version of freqtrade
 FTG_START_MODE=false # start ftgenerator
+FT_MOVE_MODE=false   # move current directory to freqtrade
 
 __setup_msg="[-U|--setup] [-R|--reset-root]"
 __fetch_ftg_msg="[-G|--fetch-ftg] [(-t|--token) <token>] [(-v|--version) <v0.0.0>]"
@@ -80,12 +84,13 @@ __start_ftg_msg="[-S|--start-ftg]"
 __help_msg="start.sh $__setup_msg $__fetch_ft_msg $__fetch_ftg_msg $__start_ftg_msg"
 
 load_option() {
-  while getopts 't:v:URGFS-:' flag; do
+  while getopts 't:v:URGFMS-:' flag; do
     case "${flag}" in
     U) SETUP_MODE=true ;;
     R) RESET_ROOT=true ;;
     G) FTG_FETCH_MODE=true ;;
     F) FT_FETCH_MODE=true ;;
+    M) FT_MOVE_MODE=true ;;
     S) FTG_START_MODE=true ;;
     t) TOKEN="$OPTARG" ;;
     v) APP_VERSION="$OPTARG" ;;
@@ -114,6 +119,10 @@ load_option() {
       fetch-ft)
         no_argument
         FT_FETCH_MODE=true
+        ;;
+      move-ft)
+        no_argument
+        FT_MOVE_MODE=true
         ;;
       token)
         require_argument
@@ -153,7 +162,6 @@ fi
 
 if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   if ! test -f "$SETUP_LOCK"; then
-
     banner "Start setup mode"
     __installation_list=(
       "python3-pip"
@@ -194,8 +202,14 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
 fi
 
 if $FT_FETCH_MODE; then
+  banner "Fetch latest freqtrade in default branch"
   if command -v "git" >/dev/null; then
-    git clone 'https://github.com/freqtrade/freqtrade.git' "$FREQTRADE_DIRECTORY"
+    if test -d $FREQTRADE_DIRECTORY; then
+      git -C "$FREQTRADE_DIRECTORY" pull
+    else
+      git clone 'https://github.com/freqtrade/freqtrade.git' "$FREQTRADE_DIRECTORY"
+    fi
+
   fi
 fi
 
@@ -263,4 +277,9 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
   fi
 
   unset __github_api __github_owner __github_repo __output_ftgenerator
+fi
+
+if $FT_MOVE_MODE; then
+  banner "Move current directory to freqtrade"
+  cd "$FREQTRADE_DIRECTORY" || exit 1
 fi
