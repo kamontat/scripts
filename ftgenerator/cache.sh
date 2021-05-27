@@ -34,7 +34,7 @@ curl -o "$__path/$__cached_filename" -sL https://raw.githubusercontent.com/kamon
 
 echo "[info] update new caches"
 # update new cache name
-printf '%s' "$__cached_filename" >"$__path/$filename"
+printf '%s' "$__cached_filename" >"$__path/$__cachename"
 
 if ! test -f "$__path/$__executable_filename"; then
   echo "[info] create executable file"
