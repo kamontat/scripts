@@ -163,8 +163,8 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   )
 
   banner "Update and install new dependencies"
-  sudo apt update
-  sudo apt upgrade
+  sudo apt update -y
+  sudo apt upgrade -y
   sudo apt install -y "${__installation_list[@]}"
 
   banner "Install docker"
