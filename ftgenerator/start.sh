@@ -67,10 +67,9 @@ APP_NAME="ftgenerator"
 FREQTRADE_DIRECTORY="/etc/freqtrade"
 FT_GENERATOR_DIRECTORY="/etc/$APP_NAME"
 DOCKER_DATA_DIRECTORY="/etc/ftdata"
-SETUP_LOCK="/etc/ftgenerator/setup.lock"
+SETUP_LOCK="/etc/ftgenerator/.setup.lock"
 
 SETUP_MODE=false     # setup environment
-RESET_ROOT=false     # reset root password (should run on GCP only)
 FTG_FETCH_MODE=false # download ftgenerator
 FT_FETCH_MODE=false  # fetch latest version of freqtrade
 FTG_START_MODE=false # start ftgenerator
@@ -83,10 +82,9 @@ __start_ftg_msg="[-S|--start-ftg]"
 __help_msg="start.sh $__setup_msg $__fetch_ft_msg $__fetch_ftg_msg $__start_ftg_msg"
 
 load_option() {
-  while getopts 't:v:URGFMS-:' flag; do
+  while getopts 't:v:UGFMS-:' flag; do
     case "${flag}" in
     U) SETUP_MODE=true ;;
-    R) RESET_ROOT=true ;;
     G) FTG_FETCH_MODE=true ;;
     F) FT_FETCH_MODE=true ;;
     S) FTG_START_MODE=true ;;
@@ -101,10 +99,6 @@ load_option() {
       setup)
         no_argument
         SETUP_MODE=true
-        ;;
-      reset-root)
-        no_argument
-        RESET_ROOT=true
         ;;
       fetch-ftg)
         no_argument
@@ -154,12 +148,19 @@ if [[ $(uname -s) != "Darwin" ]]; then
   OS="linux"
 fi
 
+if ! test -d "$FT_GENERATOR_DIRECTORY"; then
+  echo "[info] creating '$FT_GENERATOR_DIRECTORY'"
+  mkdir -p "$FT_GENERATOR_DIRECTORY"
+fi
+if ! test -d "$DOCKER_DATA_DIRECTORY"; then
+  echo "[info] creating '$DOCKER_DATA_DIRECTORY'"
+  mkdir -p "$DOCKER_DATA_DIRECTORY"
+fi
+
 if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   if ! test -f "$SETUP_LOCK"; then
     banner "Start setup mode"
     __installation_list=(
-      "python3-pip"
-      "python3-pandas"
       "git"
       "vim"
       "apt-transport-https"
@@ -183,13 +184,8 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
     sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
 
-    if $RESET_ROOT; then
-      banner "Reset 'root' password"
-      sudo passwd root
-    fi
-
     touch "$SETUP_LOCK" # create setup lock
-    unset __installation_list __reset_root_mode
+    unset __installation_list
   else
     echo "You has been setup this machine before, to re-setup please delete this file ($SETUP_LOCK)"
   fi
