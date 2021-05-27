@@ -256,11 +256,10 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
     fi
   fi
 
-  cd "$__output_ftgenerator" || exit 1
-
   if $FTG_START_MODE; then
-    ./ftgenerator -version
-    ./ftgenerator -level 3 -pwd "$FREQTRADE_DIRECTORY" -user-data "$FREQTRADE_DIRECTORY/user_data" -docker "$DOCKER_DATA_DIRECTORY"
+    cd "$__output_ftgenerator" || exit 1
+    ./ftgenerator --version
+    ./ftgenerator --level 3 --user-data "$FREQTRADE_DIRECTORY/user_data" --docker "$DOCKER_DATA_DIRECTORY"
   fi
 
   unset __github_api __github_owner __github_repo __output_ftgenerator
