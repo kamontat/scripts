@@ -30,7 +30,7 @@ fi
 
 echo "[info] download new caches ($__cached_filename)"
 # download new cache
-curl -o "$__path/$__cached_filename" -sL https://raw.githubusercontent.com/kamontat/scripts/main/ftgenerator/start.sh
+curl -o "$__path/$__cached_filename" -sL "https://raw.githubusercontent.com/kamontat/scripts/main/ftgenerator/start.sh?random=$RANDOM"
 
 echo "[info] update new caches"
 # update new cache name
