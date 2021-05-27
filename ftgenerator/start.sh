@@ -10,7 +10,8 @@ set -e #ERROR    - Exit whole scripts if single non-zero command return
 # set -n #EVALUATE - Check syntax of the script but don't execute.
 
 ##################################################################################
-## 1.   (optional) run setup.sh for setup environment and install dependencies  ##
+## 1.1. (optional) run setup.sh for setup environment and install dependencies  ##
+## 1.2. setup logic will check setup.lock file   ##
 ## 2.1. (optional) fetch ftgenerator <version> from github private repository   ##
 ## 2.2. (optional) install ftgenerator scripts and data to correctly location   ##
 ## 3.   (optional) fetch latest freqtrade code from Github                      ##
@@ -63,6 +64,7 @@ APP_NAME="ftgenerator"
 FREQTRADE_DIRECTORY="/etc/freqtrade"
 FT_GENERATOR_DIRECTORY="/etc/$APP_NAME"
 DOCKER_DATA_DIRECTORY="/etc/ftdata"
+SETUP_LOCK="/etc/ftgenerator/setup.lock"
 
 SETUP_MODE=false     # setup environment
 RESET_ROOT=false     # reset root password (should run on GCP only)
@@ -150,39 +152,45 @@ if [[ $(uname -s) != "Darwin" ]]; then
 fi
 
 if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
-  banner "Start setup mode"
-  __installation_list=(
-    "python3-pip"
-    "python3-pandas"
-    "git"
-    "vim"
-    "apt-transport-https"
-    "curl"
-    "ca-certificates"
-    "gnupg"
-  )
+  if ! test -f "$SETUP_LOCK"; then
 
-  banner "Update and install new dependencies"
-  sudo apt update -y
-  sudo apt upgrade -y
-  sudo apt install -y "${__installation_list[@]}"
+    banner "Start setup mode"
+    __installation_list=(
+      "python3-pip"
+      "python3-pandas"
+      "git"
+      "vim"
+      "apt-transport-https"
+      "curl"
+      "ca-certificates"
+      "gnupg"
+    )
 
-  banner "Install docker"
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-  sudo apt update
-  sudo apt install -y "docker-ce" "docker-ce-cli" "containerd.io"
+    banner "Update and install new dependencies"
+    sudo apt update -y
+    sudo apt upgrade -y
+    sudo apt install -y "${__installation_list[@]}"
 
-  banner "Install docker-compose"
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  sudo chmod +x /usr/local/bin/docker-compose
+    banner "Install docker"
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    sudo apt update
+    sudo apt install -y "docker-ce" "docker-ce-cli" "containerd.io"
 
-  if $RESET_ROOT; then
-    banner "Reset 'root' password"
-    sudo passwd root
+    banner "Install docker-compose"
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    if $RESET_ROOT; then
+      banner "Reset 'root' password"
+      sudo passwd root
+    fi
+
+    touch "$SETUP_LOCK" # create setup lock
+    unset __installation_list __reset_root_mode
+  else
+    echo "You has been setup this machine before, to re-setup please delete this file ($SETUP_LOCK)"
   fi
-
-  unset __installation_list __reset_root_mode
 fi
 
 if $FT_FETCH_MODE; then
@@ -251,8 +259,8 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
   cd "$__output_ftgenerator" || exit 1
 
   if $FTG_START_MODE; then
-    ./ftgenerator --version
-    ./ftgenerator --level 3 --pwd "$FREQTRADE_DIRECTORY" --user-data "$FREQTRADE_DIRECTORY/user_data" --docker "$DOCKER_DATA_DIRECTORY"
+    ./ftgenerator -version
+    ./ftgenerator -level 3 -pwd "$FREQTRADE_DIRECTORY" -user-data "$FREQTRADE_DIRECTORY/user_data" -docker "$DOCKER_DATA_DIRECTORY"
   fi
 
   unset __github_api __github_owner __github_repo __output_ftgenerator
