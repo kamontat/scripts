@@ -19,7 +19,7 @@ __cachename="__ftgenerator-cachename"
 __executable_filename="ftgenerator-start"
 
 if test -f "$__path/$__cachename"; then
-  echo "removing old cache data"
+  echo "[info] removing old cache data"
 
   filename="$__path/$(cat "$__path/$__cachename")"
   rm "$__path/$filename"
@@ -28,12 +28,16 @@ if test -f "$__path/$__cachename"; then
   unset filename
 fi
 
+echo "[info] download new caches"
 # download new cache
 curl -o "$__path/$filename" -sL https://raw.githubusercontent.com/kamontat/scripts/main/ftgenerator/start.sh
+
+echo "[info] update new caches"
 # update new cache name
 echo "$__cached_filename" >"$__path/$filename"
 
 if ! test -f "$__path/$__executable_filename"; then
+  echo "[info] create executable file"
   # create executable file
   touch "$__path/$__executable_filename"
   echo "#!/usr/bin/env bash
