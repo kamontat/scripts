@@ -42,6 +42,8 @@ if ! test -f "$__path/$__executable_filename"; then
   touch "$__path/$__executable_filename"
   echo "#!/usr/bin/env bash
 
-filename=\"$(cat \"$__path/$__cachename\")\"
+filename=\"\$(cat \"$__path/$__cachename\")\"
 bash \"\$filename\" \$@" >>"$__path/$__executable_filename"
+
+  sudo chmod +x $__path/$__executable_filename
 fi
