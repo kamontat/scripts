@@ -65,11 +65,12 @@ FT_GENERATOR_DIRECTORY="/etc/$APP_NAME"
 DOCKER_DATA_DIRECTORY="/etc/ftdata"
 
 SETUP_MODE=false     # setup environment
+RESET_ROOT=false     # reset root password (should run on GCP only)
 FTG_FETCH_MODE=false # download ftgenerator
 FT_FETCH_MODE=false  # fetch latest version of freqtrade
 FTG_START_MODE=false # start ftgenerator
 
-__setup_msg="[-U|--setup]"
+__setup_msg="[-U|--setup] [-R|--reset-root]"
 __fetch_ftg_msg="[-G|--fetch-ftg] [(-t|--token) <token>] [(-v|--version) <v0.0.0>]"
 __fetch_ft_msg="[-F|--fetch-ft]"
 __start_ftg_msg="[-S|--start-ftg]"
@@ -77,9 +78,10 @@ __start_ftg_msg="[-S|--start-ftg]"
 __help_msg="start.sh $__setup_msg $__fetch_ft_msg $__fetch_ftg_msg $__start_ftg_msg"
 
 load_option() {
-  while getopts 't:v:UGFS-:' flag; do
+  while getopts 't:v:URGFS-:' flag; do
     case "${flag}" in
     U) SETUP_MODE=true ;;
+    R) RESET_ROOT=true ;;
     G) FTG_FETCH_MODE=true ;;
     F) FT_FETCH_MODE=true ;;
     S) FTG_START_MODE=true ;;
@@ -94,6 +96,10 @@ load_option() {
       setup)
         no_argument
         SETUP_MODE=true
+        ;;
+      reset-root)
+        no_argument
+        RESET_ROOT=true
         ;;
       fetch-ftg)
         no_argument
@@ -145,14 +151,6 @@ fi
 
 if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   banner "Start setup mode"
-
-  __reset_root_mode=false
-  echo "Do you want to reset 'root' password [Y|n]: "
-  read -r ans
-  if [[ "$ans" == "Y" ]] || [[ "$ans" == "y" ]]; then
-    __reset_root_mode=true
-  fi
-
   __installation_list=(
     "python3-pip"
     "python3-pandas"
@@ -179,7 +177,7 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
 
-  if $__reset_root_mode; then
+  if $RESET_ROOT; then
     banner "Reset 'root' password"
     sudo passwd root
   fi
