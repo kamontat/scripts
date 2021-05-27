@@ -74,7 +74,6 @@ RESET_ROOT=false     # reset root password (should run on GCP only)
 FTG_FETCH_MODE=false # download ftgenerator
 FT_FETCH_MODE=false  # fetch latest version of freqtrade
 FTG_START_MODE=false # start ftgenerator
-FT_MOVE_MODE=false   # move current directory to freqtrade
 
 __setup_msg="[-U|--setup] [-R|--reset-root]"
 __fetch_ftg_msg="[-G|--fetch-ftg] [(-t|--token) <token>] [(-v|--version) <v0.0.0>]"
@@ -90,7 +89,6 @@ load_option() {
     R) RESET_ROOT=true ;;
     G) FTG_FETCH_MODE=true ;;
     F) FT_FETCH_MODE=true ;;
-    M) FT_MOVE_MODE=true ;;
     S) FTG_START_MODE=true ;;
     t) TOKEN="$OPTARG" ;;
     v) APP_VERSION="$OPTARG" ;;
@@ -119,10 +117,6 @@ load_option() {
       fetch-ft)
         no_argument
         FT_FETCH_MODE=true
-        ;;
-      move-ft)
-        no_argument
-        FT_MOVE_MODE=true
         ;;
       token)
         require_argument
@@ -213,6 +207,7 @@ if $FT_FETCH_MODE; then
   fi
 fi
 
+FT_GENEATOR_OUTOUT_DIRECTORY="$FT_GENERATOR_DIRECTORY/${APP_VERSION:-v0.0.0}/"
 if $FTG_FETCH_MODE || $FTG_START_MODE; then
   banner "Start ftgenerator fetch=$FTG_FETCH_MODE and start=$FTG_START_MODE"
 
@@ -224,12 +219,11 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
   __github_api="https://api.github.com/graphql"
   __github_owner="kamontat"
   __github_repo="$APP_NAME"
-  __output_ftgenerator="$FT_GENERATOR_DIRECTORY/$APP_VERSION/"
 
-  banner "Create ftgenerator on $__output_ftgenerator"
+  banner "Create ftgenerator on $FT_GENEATOR_OUTOUT_DIRECTORY"
 
   if $FTG_FETCH_MODE; then
-    if ! test -d "$__output_ftgenerator"; then
+    if ! test -d "$FT_GENEATOR_OUTOUT_DIRECTORY"; then
       if test -z "$TOKEN"; then
         echo "needs github token, --help for more information"
         exit 1
@@ -259,8 +253,8 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
       __curl "$asset_link"
       echo "download to $__repo_tar"
 
-      mkdir -p "$__output_ftgenerator" # create directory
-      tar -xzvf "$__repo_tar" -C "$__output_ftgenerator"
+      mkdir -p "$FT_GENEATOR_OUTOUT_DIRECTORY" # create directory
+      tar -xzvf "$__repo_tar" -C "$FT_GENEATOR_OUTOUT_DIRECTORY"
       rm -r "$__repo_tar"
 
       unset asset_json trim_asset_json asset_link
@@ -271,15 +265,17 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
   fi
 
   if $FTG_START_MODE; then
-    cd "$__output_ftgenerator" || exit 1
+    cd "$FT_GENEATOR_OUTOUT_DIRECTORY" || exit 1
     ./ftgenerator --version
     ./ftgenerator --level 3 --user-data "$FREQTRADE_DIRECTORY/user_data" --docker "$DOCKER_DATA_DIRECTORY"
   fi
 
-  unset __github_api __github_owner __github_repo __output_ftgenerator
+  unset __github_api __github_owner __github_repo
 fi
 
-if $FT_MOVE_MODE; then
-  banner "Move current directory to freqtrade"
-  cd "$FREQTRADE_DIRECTORY" || exit 1
-fi
+banner "## Final information ##
+1. Freqtrade   : $FREQTRADE_DIRECTORY
+2. FTgenerator : $FT_GENEATOR_OUTOUT_DIRECTORY
+3. Docker data : $DOCKER_DATA_DIRECTORY"
+
+unset FREQTRADE_DIRECTORY FT_GENEATOR_OUTOUT_DIRECTORY DOCKER_DATA_DIRECTORY
