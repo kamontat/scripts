@@ -14,7 +14,8 @@ set -e #ERROR    - Exit whole scripts if single non-zero command return
 ## 1.2. setup logic will check setup.lock file                                  ##
 ## 2.1. (optional) fetch ftgenerator <version> from github private repository   ##
 ## 2.2. (optional) install ftgenerator scripts and data to correctly location   ##
-## 3.   (optional) fetch latest freqtrade code from Github                      ##
+## 3.1. (optional) fetch latest freqtrade code from Github                      ##
+## 3.2. (optional) update local docker image on develop and develop_plot        ##
 ## 4.   (optional) start ftgenerator script                                     ##
 ## 5.   (optional) move current directory to freqtrade repository               ##
 ##################################################################################
@@ -199,8 +200,11 @@ if $FT_FETCH_MODE; then
     else
       git clone 'https://github.com/freqtrade/freqtrade.git' "$FREQTRADE_DIRECTORY"
     fi
-
   fi
+
+  banner "Update freqtrade docker"
+  docker pull "freqtradeorg/freqtrade:develop_plot"
+  docker pull "freqtradeorg/freqtrade:develop"
 fi
 
 FT_GENEATOR_OUTOUT_DIRECTORY="$FT_GENERATOR_DIRECTORY/${APP_VERSION:-v0.0.0}/"
