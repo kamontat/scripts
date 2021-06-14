@@ -192,21 +192,6 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   fi
 fi
 
-if $FT_FETCH_MODE; then
-  banner "Fetch latest freqtrade in default branch"
-  if command -v "git" >/dev/null; then
-    if test -d $FREQTRADE_DIRECTORY; then
-      git -C "$FREQTRADE_DIRECTORY" pull
-    else
-      git clone 'https://github.com/freqtrade/freqtrade.git' "$FREQTRADE_DIRECTORY"
-    fi
-  fi
-
-  banner "Update freqtrade docker"
-  docker pull "freqtradeorg/freqtrade:develop_plot"
-  docker pull "freqtradeorg/freqtrade:develop"
-fi
-
 FT_GENEATOR_OUTOUT_DIRECTORY="$FT_GENERATOR_DIRECTORY/${APP_VERSION:-v0.0.0}/"
 if $FTG_FETCH_MODE || $FTG_START_MODE; then
   banner "Start ftgenerator fetch=$FTG_FETCH_MODE and start=$FTG_START_MODE"
@@ -273,9 +258,23 @@ if $FTG_FETCH_MODE || $FTG_START_MODE; then
   unset __github_api __github_owner __github_repo
 fi
 
+if $FT_FETCH_MODE; then
+  __deploy_scripts="$FT_GENEATOR_OUTOUT_DIRECTORY/scripts"
+
+  if test -d "$__deploy_scripts"; then
+    banner "Fetch latest version from freqtrade"
+    "$__deploy_scripts/upgrade-freqtrade.sh"
+
+    banner "Build latest version of postgres freqtrade"
+    "$__deploy_scripts/upgrade-freqtrade.sh"
+  fi
+
+  unset __deploy_scripts
+fi
+
 banner "## Final information ##
-1. Freqtrade   : $FREQTRADE_DIRECTORY
-2. FTgenerator : $FT_GENEATOR_OUTOUT_DIRECTORY
-3. Docker data : $DOCKER_DATA_DIRECTORY"
+1. Freqtrade   : cd '$FREQTRADE_DIRECTORY'
+2. FTgenerator : cd '$FT_GENEATOR_OUTOUT_DIRECTORY'
+3. Docker data : cd '$DOCKER_DATA_DIRECTORY'"
 
 unset FREQTRADE_DIRECTORY FT_GENEATOR_OUTOUT_DIRECTORY DOCKER_DATA_DIRECTORY
