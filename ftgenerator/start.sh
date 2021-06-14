@@ -75,7 +75,7 @@ FTG_FETCH_MODE=false # download ftgenerator
 FT_FETCH_MODE=false  # fetch latest version of freqtrade
 FTG_START_MODE=false # start ftgenerator
 
-__setup_msg="[-U|--setup] [-R|--reset-root]"
+__setup_msg="[-U|--setup]"
 __fetch_ftg_msg="[-G|--fetch-ftg] [(-t|--token) <token>] [(-v|--version) <v0.0.0>]"
 __fetch_ft_msg="[-F|--fetch-ft]"
 __start_ftg_msg="[-S|--start-ftg]"
@@ -192,7 +192,7 @@ if $SETUP_MODE && [[ "$OS" == "linux" ]]; then
   fi
 fi
 
-FT_GENEATOR_OUTOUT_DIRECTORY="$FT_GENERATOR_DIRECTORY/${APP_VERSION:-v0.0.0}/"
+FT_GENEATOR_OUTOUT_DIRECTORY="$FT_GENERATOR_DIRECTORY/${APP_VERSION:-v0.0.0}"
 if $FTG_FETCH_MODE || $FTG_START_MODE; then
   banner "Start ftgenerator fetch=$FTG_FETCH_MODE and start=$FTG_START_MODE"
 
