@@ -263,10 +263,10 @@ if $FT_FETCH_MODE; then
 
   if test -d "$__deploy_scripts"; then
     banner "Fetch latest version from freqtrade"
-    "$__deploy_scripts/upgrade-freqtrade.sh"
+    "$__deploy_scripts/upgrade-ft.sh"
 
     banner "Build latest version of postgres freqtrade"
-    "$__deploy_scripts/upgrade-freqtrade.sh"
+    "$__deploy_scripts/upgrade-pgft.sh"
   fi
 
   unset __deploy_scripts
